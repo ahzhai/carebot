@@ -28,3 +28,34 @@ body {
 .glowing-orb:active {
     transform: scale(0.95);
 }
+
+.glowing-orb.recording {
+    background: radial-gradient(circle, #ff4081 20%, #ff9800 60%, rgba(244, 216, 180, 0) 100%);
+    box-shadow: 
+        0 0 40px rgba(255, 64, 129, 0.5),
+        0 0 80px rgba(255, 64, 129, 0.4),
+        0 0 120px rgba(255, 64, 129, 0.3);
+}
+
+.glowing-orb.thinking {
+    background: radial-gradient(circle, #ff9800 20%, #ffb3d9 60%, rgba(244, 216, 180, 0) 100%);
+    box-shadow: 
+        0 0 40px rgba(255, 152, 0, 0.5),
+        0 0 80px rgba(255, 179, 217, 0.4),
+        0 0 120px rgba(255, 179, 217, 0.3);
+}
+
+.glowing-orb.speaking {
+    animation: pulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+}

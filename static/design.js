@@ -42,7 +42,9 @@ orb.addEventListener('click', () => {
                     console.error('Error stopping recording:', data.error);
                     alert('Error stopping recording: ' + data.error);
                 } else {
+                    orb.classList.remove('recording');
                     console.log('Recording stopped and processed:', data);
+                    orb.classList.add('thinking');
                     // Call process_recording function
                     return fetch('/process_recording', {
                         method: 'POST',
@@ -57,7 +59,7 @@ orb.addEventListener('click', () => {
             .then(processedData => {
                 console.log('Recording processed:', processedData);
                 isRecording = false;
-                orb.classList.remove('recording');
+                // orb.classList.add('normal');
 
                 // Play the audio file
                 console.log('Creating audio player');
@@ -66,9 +68,21 @@ orb.addEventListener('click', () => {
                     .then(response => {
                         if (response.ok) {
                             const audio = new Audio('/static/temp.mp3');
+                            orb.classList.remove('thinking');
+                            orb.classList.add('speaking');
+
+                            audio.addEventListener('play', () => {
+                                orb.style.animationDuration = `${audio.duration * 0.001}s`;
+                            });
+
+                            audio.addEventListener('ended', () => {
+                                orb.classList.remove('speaking');
+                            });
+
                             audio.play().catch(error => {
                                 console.error('Error playing audio:', error);
                                 alert('Error playing audio: ' + error.message);
+                                orb.classList.remove('speaking');
                             });
                         } else {
                             throw new Error('Audio file not found');

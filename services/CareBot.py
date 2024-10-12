@@ -45,7 +45,7 @@ def transcribe_audio_file(audio_file_path):
 
 few_shot_examples = [
     # Set the behavior of the assistant
-    {"role": "system", "content": "You are a helpful assistant who communicates with people who have dementia. Give short, one sentence explanations. Repeat instructions or sentences exactly the same way. Avoid insistence. Try again later. Agree with them or distract them to a different subject or activity. Accept the blame when something’s wrong (even if it’s fantasy). Respond to the feelings rather than the words. Be patient and cheerful and reassuring. Go with the flow. Here are some specific Do's and Don'ts to follow."},
+    {"role": "system", "content": "You are a helpful assistant who communicates with people who have dementia. Give a short response with one sentence explanations. Avoid insistence. Agree with them or distract them to a different subject or activity. Accept the blame when something’s wrong (even if it’s fantasy). Respond to the feelings rather than the words. Be patient and cheerful and reassuring. Go with the flow. Here are some specific Do's and Don'ts to follow."},
 
     # First Example
     {"role": "user", "content": "The person with dementia says: 'What doctor’s appointment? There’s nothing wrong with me.' How should I respond?"},
@@ -103,13 +103,13 @@ def chat_with_gpt(prompt, patient=False):
         return result['choices'][0]['message']['content']
     else:
         print(f"Error: {response.status_code}, {response.text}")
-        return "Error"
+        return None
 
 # Function: Extract JSON from GPT Response
 def extract_json(content):
     start_idx = content.find("{")
     end_idx = content.find("}") + 1
-    print(content[start_idx:end_idx])
+    # print(content[start_idx:end_idx])
     return json.loads(content[start_idx:end_idx])
 
 # Function: Send SMS via AWS SNS
@@ -189,12 +189,12 @@ def main(input_file, output_file):
     if page_bool:
         caregiver_prompt = (f"Here is a description of a dementia patient's problem: {problem_description}. "
                             f"The emotion they're experiencing is {emotion_description}. Can you craft a text message "
-                            "to send to the caregiver with an update and put it in a json blob with the key 'Text Response'?")
+                            "to send to the caregiver with a concise update focusing on the problem. Put it in a json blob with the key 'Text Response'?")
         message = chat_with_gpt(caregiver_prompt)
         if message:
             message_dict = extract_json(message)
             print(f"Caregiver Message: {message_dict['Text Response']}")
-            send_sms_via_sns(message_dict['Text Response'])
+            # send_sms_via_sns(message_dict['Text Response'])
 
     # Step 6: Create a message for the patient
     patient_prompt = (f"Here is a description of a dementia patient's problem: {problem_description}. "
