@@ -184,6 +184,7 @@ def main(input_file, output_file):
 
     #Step 4: Determine Problem Severity
     page_bool = determine_severity(problem_description)
+    
     # Step 5: Create a message for the caregiver
     if page_bool:
         caregiver_prompt = (f"Here is a description of a dementia patient's problem: {problem_description}. "
