@@ -18,7 +18,7 @@ import argparse
 TRANSCRIPTION_ENDPOINT = 'https://api.openai.com/v1/audio/transcriptions'
 CHAT_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-AUDIO_FILE_PATH = "Schizo.m4a"
+AUDIO_FILE_PATH = "toohot.m4a"
 AWS_KEY = ""
 AWS_SECRET_KEY = ""
 
@@ -43,20 +43,58 @@ def transcribe_audio_file(audio_file_path):
         print(f"Error: {response.status_code}, {response.text}")
         return None
 
+few_shot_examples = [
+    # Set the behavior of the assistant
+    {"role": "system", "content": "You are a helpful assistant who communicates with people who have dementia. Give short, one sentence explanations. Repeat instructions or sentences exactly the same way. Avoid insistence. Try again later. Agree with them or distract them to a different subject or activity. Accept the blame when something’s wrong (even if it’s fantasy). Respond to the feelings rather than the words. Be patient and cheerful and reassuring. Go with the flow. Here are some specific Do's and Don'ts to follow."},
+
+    # First Example
+    {"role": "user", "content": "The person with dementia says: 'What doctor’s appointment? There’s nothing wrong with me.' How should I respond?"},
+    {"role": "assistant", "content": "Do: (short explanation) 'It’s just a regular checkup.'\n(accept blame) 'I’m sorry if I forgot to tell you.'\nDon’t: (reason) 'You’ve been seeing the doctor every three months for the last two years. It’s written on the calendar and I told you about it yesterday and this morning.'"},
+
+    # Second Example
+    {"role": "user", "content": "The person with dementia says: 'I didn’t write this check for $500. Someone at the bank is forging my signature.' How should I respond?"},
+    {"role": "assistant", "content": "Do: (respond to feelings) 'That’s a scary thought.'\n(reassure) 'I’ll make sure they don’t do that.'\n(distract) 'Would you help me fold the towels?'\nDon’t: (argue) 'What? Don’t be silly! The bank wouldn’t be forging your signature.'"},
+
+    # Third Example
+    {"role": "user", "content": "The person with dementia says: 'Nobody’s going to make decisions for me. You can go now…and don’t come back!' How should I respond?"},
+    {"role": "assistant", "content": "Do: (accept blame or respond to feelings) 'I’m sorry this is a tough time.'\n(reassure) 'I love you and we’re going to get through this together.'\n(distract) 'You know what? Don has a new job. He’s really excited about it.'\nDon’t: (confront) 'I’m not going anywhere and you can’t remember enough to make your own decisions.'"},
+
+    # Fourth Example
+    {"role": "user", "content": "The person with dementia says: 'Joe hasn’t called for a long time. I hope he’s okay.' How should I respond?"},
+    {"role": "assistant", "content": "Do: (reassure) 'You really like talking with him don’t you?'\n(distract) 'Let’s call him when we get back from our walk.'\nDon’t: (remind) 'Joe called yesterday and you talked with him for 15 minutes.'"},
+
+    # Fifth Example
+    {"role": "user", "content": "The person with dementia says: 'Who are you? Where’s my husband?' How should I respond?"},
+    {"role": "assistant", "content": "Do: (go with the flow, reassure) 'He’ll be here for dinner.'\n(distract) 'How about some milk and cookies?… Would you like chocolate chip or oatmeal?'\nDon’t: (take it personally) 'What do you mean – who’s your husband? I am!'"},
+
+    # Sixth Example
+    {"role": "user", "content": "The person with dementia says: 'I don’t want to eat this! I hate chicken.' How should I respond?"},
+    {"role": "assistant", "content": "Do: (accept blame) 'I’m so sorry, I forgot. I was in such a rush that it slipped my mind.'\n(respond positively) 'Let me see what else we have available.' Leave the room and try again.\nDon’t: (respond negatively) 'You just told me you wanted chicken. I’m not making you anything else, so you better eat it!'"}
+]
+
 # Function: Chat with GPT
-def chat_with_gpt(prompt):
+def chat_with_gpt(prompt, patient=False):
     headers = {
         'Authorization': f'Bearer {OPENAI_API_KEY}',
         'Content-Type': 'application/json'
     }
-    data = {
-        "model": "gpt-4o-mini",
-        "messages": [
-            {"role": "system", "content": "You are an assistant that extracts important information."},
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.5,
-    }
+
+    if patient:
+        data = {
+            "model": "gpt-4o-mini",
+            "messages": [
+                {"role": "system", "content": "You are an assistant that extracts important information."},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.5,}
+    else:
+        data = {
+            "model": "gpt-4o-mini",
+            "messages": few_shot_examples + [
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.5,
+        }
 
     response = requests.post(CHAT_ENDPOINT, headers=headers, json=data)
 
@@ -136,7 +174,7 @@ def main(input_file, output_file):
     if message:
         message_dict = extract_json(message)
         print(f"Caregiver Message: {message_dict['Text Response']}")
-        send_sms_via_sns(message_dict['Text Response'])
+        # send_sms_via_sns(message_dict['Text Response'])
 
     # Step 5: Create a message for the patient
     patient_prompt = (f"Here is a description of a dementia patient's problem: {problem_description}. "
@@ -144,7 +182,7 @@ def main(input_file, output_file):
                       "that will be transcribed to audio to say to the patient? Our main goal is to validate their "
                       "feelings and then deescalate any negative emotions/reinforce any positive emotions. Make sure "
                       "to not make it infantilizing - try to be specific. Put your response in a json blob with key 'Voice Response'.")
-    message = chat_with_gpt(patient_prompt)
+    message = chat_with_gpt(patient_prompt, patient=True)
     if message:
         voice_dict = extract_json(message)
         voice_message = voice_dict['Voice Response']
