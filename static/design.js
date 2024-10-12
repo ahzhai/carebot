@@ -56,9 +56,28 @@ orb.addEventListener('click', () => {
             .then(response => response.json())
             .then(processedData => {
                 console.log('Recording processed:', processedData);
-                alert('Recording processed: ' + processedData.result);
                 isRecording = false;
                 orb.classList.remove('recording');
+
+                // Play the audio file
+                console.log('Creating audio player');
+                // Update the audio file path
+                fetch('/static/temp.mp3')
+                    .then(response => {
+                        if (response.ok) {
+                            const audio = new Audio('/static/temp.mp3');
+                            audio.play().catch(error => {
+                                console.error('Error playing audio:', error);
+                                alert('Error playing audio: ' + error.message);
+                            });
+                        } else {
+                            throw new Error('Audio file not found');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading audio file:', error);
+                        alert('Error loading audio file: ' + error.message);
+                    });
             })
             .catch(error => {
                 console.error('Error processing recording:', error);

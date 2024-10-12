@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, send_from_directory
 # from flask_cors import CORS
 import services.test_math as test_math
 import services.voice as voice
@@ -6,7 +6,7 @@ import services.CareBot as CareBot
 import os
 import requests
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static')
 #CORS(app, resources={r"/calculate": {"origins": "http://localhost:5000"}})
 
 TRANSCRIPTION_ENDPOINT = 'https://api.openai.com/v1/audio/transcriptions'
@@ -82,11 +82,15 @@ def process_recording():
             voice_dict = CareBot.extract_json(message)
             voice_message = voice_dict['Voice Response']
             print(f"Voice Message: {voice_message}")
-            CareBot.generate_voice_message(voice_message, "temp.mp3")
+            CareBot.generate_voice_message(voice_message, "static/temp.mp3")
 
         return jsonify({"message": "Recording processed. Generated voice message.", "result": voice_message})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/static/<path:path>')
+def send_static(path):
+    return send_from_directory('static', path)
 
 if __name__ == '__main__':
     app.run(debug=True)
