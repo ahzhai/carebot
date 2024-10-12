@@ -103,7 +103,7 @@ def chat_with_gpt(prompt, patient=False):
         return result['choices'][0]['message']['content']
     else:
         print(f"Error: {response.status_code}, {response.text}")
-        return None
+        return "Error"
 
 # Function: Extract JSON from GPT Response
 def extract_json(content):
