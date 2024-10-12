@@ -18,6 +18,47 @@ orb.addEventListener('mouseout', () => {
     `;
 });
 
+let isRecording = false;
+
+orb.addEventListener('click', () => {
+    if (!isRecording) {
+        // First click: Start recording
+        fetch('/start_recording')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Recording started:', data);
+                isRecording = true;
+                orb.classList.add('recording');
+            })
+            .catch(error => {
+                console.error('Error starting recording:', error);
+            });
+    } else {
+        // Second click: Stop recording and process audio file
+        fetch('/stop_recording')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Error stopping recording:', data.error);
+                    alert('Error stopping recording: ' + data.error);
+                } else {
+                    console.log('Recording stopped and processed:', data);
+                    alert('Recording processed: ' + data.result);
+                }
+                isRecording = false;
+                orb.classList.remove('recording');
+            })
+            .catch(error => {
+                console.error('Error stopping recording:', error);
+                alert('Error stopping recording: ' + error.message);
+                isRecording = false;
+                orb.classList.remove('recording');
+            });
+    }
+});
+
+
+/*
 orb.addEventListener('click', () => {
     fetch('/calculate', {
         method: 'GET',
@@ -41,3 +82,4 @@ orb.addEventListener('click', () => {
         alert('An error occurred while calculating.');
     });
 });
+*/
