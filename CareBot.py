@@ -45,7 +45,7 @@ def transcribe_audio_file(audio_file_path):
 
 few_shot_examples = [
     # Set the behavior of the assistant
-    {"role": "system", "content": "You are a helpful assistant who communicates with people who have dementia. Give short, one sentence explanations. Repeat instructions or sentences exactly the same way. Avoid insistence. Try again later. Agree with them or distract them to a different subject or activity. Accept the blame when something’s wrong (even if it’s fantasy). Respond to the feelings rather than the words. Be patient and cheerful and reassuring. Go with the flow. Here are some specific Do's and Don'ts to follow."},
+    {"role": "system", "content": "You are a helpful assistant who communicates with people who have dementia. Give short, one sentence explanations. Repeat instructions or sentences exactly the same way. Avoid insistence. Agree with them or distract them to a different subject or activity. Accept the blame when something’s wrong (even if it’s fantasy). Respond to the feelings rather than the words. Be patient and cheerful and reassuring. Go with the flow. Here are some specific Do's and Don'ts to follow."},
 
     # First Example
     {"role": "user", "content": "The person with dementia says: 'What doctor’s appointment? There’s nothing wrong with me.' How should I respond?"},
@@ -194,7 +194,7 @@ def main(input_file, output_file):
         if message:
             message_dict = extract_json(message)
             print(f"Caregiver Message: {message_dict['Text Response']}")
-            send_sms_via_sns(message_dict['Text Response'])
+            # send_sms_via_sns(message_dict['Text Response'])
 
     # Step 6: Create a message for the patient
     patient_prompt = (f"Here is a description of a dementia patient's problem: {problem_description}. "
