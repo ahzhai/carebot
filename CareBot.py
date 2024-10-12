@@ -9,16 +9,18 @@
 import os
 import json
 import openai
+from openai import OpenAI
 import requests
 import boto3
+import argparse
 
 # Initialize Constants
 TRANSCRIPTION_ENDPOINT = 'https://api.openai.com/v1/audio/transcriptions'
 CHAT_ENDPOINT = "https://api.openai.com/v1/chat/completions"
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "open-ai-key")
-AUDIO_FILE_PATH = "drive/MyDrive/CS329T/data/Schizo.m4a"
-AWS_KEY = "aws-key"
-AWS_SECRET_KEY = "secret-key"
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+AUDIO_FILE_PATH = "Schizo.m4a"
+AWS_KEY = ""
+AWS_SECRET_KEY = ""
 
 
 # Function: Transcribe Audio File
@@ -75,8 +77,8 @@ def extract_json(content):
 def send_sms_via_sns(message):
     sns = boto3.client(
         "sns",
-        aws_access_key_id="your-aws-access-key-id-here",
-        aws_secret_access_key="your-aws-secret-access-key-here",
+        aws_access_key_id=AWS_KEY,
+        aws_secret_access_key=AWS_SECRET_KEY,
         region_name="us-east-2"
     )
     text_response = sns.publish(
@@ -91,10 +93,20 @@ def send_sms_via_sns(message):
     )
     print(f"Message sent! Message ID: {text_response['MessageId']}")
 
+def generate_voice_message(message, output_file):
+    client = OpenAI()
+    response = client.audio.speech.create(
+        model="tts-1",
+        voice="alloy",
+        input=message
+    )
+    response.stream_to_file(output_file)
+
+
 # Main Workflow
-def main():
-    # Step 1: Transcribe the audio file
-    audio_response = transcribe_audio_file(AUDIO_FILE_PATH)
+def main(input_file, output_file):
+    os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+    audio_response = transcribe_audio_file(input_file)
     if not audio_response:
         return
 
@@ -105,7 +117,7 @@ def main():
               "stress: physical pain, full bladder, temperature, sound, light, and internal personal frustration. "
               "'Emotion' maps to a description of the emotions the person is experiencing as a result of the stimulus.")
 
-    print(f"Prompt to GPT: {prompt}")
+    # print(f"Prompt to GPT: {prompt}")
     content = chat_with_gpt(prompt)
     if not content:
         return
@@ -114,7 +126,7 @@ def main():
     json_data = extract_json(content)
     problem_description = json_data['Content']
     emotion_description = json_data['Emotion']
-    print(f"Problem: {problem_description}, Emotion: {emotion_description}")
+    # print(f"Problem: {problem_description}, Emotion: {emotion_description}")
 
     # Step 4: Create a message for the caregiver
     caregiver_prompt = (f"Here is a description of a dementia patient's problem: {problem_description}. "
@@ -131,12 +143,19 @@ def main():
                       f"The emotion they're experiencing is {emotion_description}. Can you craft a message "
                       "that will be transcribed to audio to say to the patient? Our main goal is to validate their "
                       "feelings and then deescalate any negative emotions/reinforce any positive emotions. Make sure "
-                      "to not make it infantilizing - try to be specific.")
+                      "to not make it infantilizing - try to be specific. Put your response in a json blob with key 'Voice Response'.")
     message = chat_with_gpt(patient_prompt)
     if message:
         voice_dict = extract_json(message)
-        print(f"Voice Message: {voice_dict['Voice Response']}")
+        voice_message = voice_dict['Voice Response']
+        print(f"Voice Message: {voice_message}")
+        generate_voice_message(voice_message, output_file)
+        
 
 # Run the main function
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Transcribe audio and generate response messages using OpenAI API.")
+    parser.add_argument("input_file", help="Path to the input audio file for transcription.")
+    parser.add_argument("output_file", help="Path to the output audio file where the voice message will be saved.")
+    args = parser.parse_args()
+    main(args.input_file, args.output_file)    
