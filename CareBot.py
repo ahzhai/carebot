@@ -18,7 +18,6 @@ import argparse
 TRANSCRIPTION_ENDPOINT = 'https://api.openai.com/v1/audio/transcriptions'
 CHAT_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-AUDIO_FILE_PATH = "Schizo.m4a"
 AWS_KEY = ""
 AWS_SECRET_KEY = ""
 
@@ -71,6 +70,7 @@ def chat_with_gpt(prompt):
 def extract_json(content):
     start_idx = content.find("{")
     end_idx = content.find("}") + 1
+    print(content[start_idx:end_idx])
     return json.loads(content[start_idx:end_idx])
 
 # Function: Send SMS via AWS SNS
@@ -102,6 +102,21 @@ def generate_voice_message(message, output_file):
     )
     response.stream_to_file(output_file)
 
+def determine_severity(problem_description):
+    prompt = (f"You are a liason between a dementia patient and a caregiver. "
+              f"The patient is having this problem currently:{problem_description} - Dementia patients often experience frustrations "
+              "that require validation and neutralization of self-deprecating emtoions. However, it is sometimes the case that their "
+              "frustrations stem from stimuli that the caregiver genuinely needs to address (medical crisis, bathroom troubles, temperature, etc...). But, "
+              "it is equally true that sometimes they have frustrations that don't really rise to the level of paging a busy caretaker. Given the problem description, "
+              "determine whether the caretaker should be paged and place your response in a json blob where 'Page' maps to  a string version of True or False. "
+              "Caregivers should always be paged if the patient is having any sort of medical issues or poses a threat to themselves or others. You should only not notify if you are sure this is a passing emotion / momentary discomfort. You can provide rationale outside the blob.")
+    content = chat_with_gpt(prompt)
+    print(f"Page Response: {content}")
+    if not content:
+        return
+    json_data = extract_json(content)
+    page = json_data['Page'].lower()
+    return 't' in page
 
 # Main Workflow
 def main(input_file, output_file):
@@ -127,18 +142,20 @@ def main(input_file, output_file):
     problem_description = json_data['Content']
     emotion_description = json_data['Emotion']
     # print(f"Problem: {problem_description}, Emotion: {emotion_description}")
+    #Step 4: Determine Problem Severity
+    page_bool = determine_severity(problem_description)
+    # Step 5: Create a message for the caregiver
+    if page_bool:
+        caregiver_prompt = (f"Here is a description of a dementia patient's problem: {problem_description}. "
+                            f"The emotion they're experiencing is {emotion_description}. Can you craft a text message "
+                            "to send to the caregiver with an update and put it in a json blob with the key 'Text Response'?")
+        message = chat_with_gpt(caregiver_prompt)
+        if message:
+            message_dict = extract_json(message)
+            print(f"Caregiver Message: {message_dict['Text Response']}")
+            send_sms_via_sns(message_dict['Text Response'])
 
-    # Step 4: Create a message for the caregiver
-    caregiver_prompt = (f"Here is a description of a dementia patient's problem: {problem_description}. "
-                        f"The emotion they're experiencing is {emotion_description}. Can you craft a text message "
-                        "to send to the caregiver with an update and put it in a json blob with the key 'Text Response'?")
-    message = chat_with_gpt(caregiver_prompt)
-    if message:
-        message_dict = extract_json(message)
-        print(f"Caregiver Message: {message_dict['Text Response']}")
-        send_sms_via_sns(message_dict['Text Response'])
-
-    # Step 5: Create a message for the patient
+    # Step 6: Create a message for the patient
     patient_prompt = (f"Here is a description of a dementia patient's problem: {problem_description}. "
                       f"The emotion they're experiencing is {emotion_description}. Can you craft a message "
                       "that will be transcribed to audio to say to the patient? Our main goal is to validate their "
