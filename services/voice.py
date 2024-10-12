@@ -1,9 +1,10 @@
 import subprocess
 import tempfile
 from openai import OpenAI
+import os
 
 client = OpenAI()
-client.api_key = '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'
+client.api_key = os.environ.get("OPENAI_API_KEY")
 
 temp_audio_file = None
 recording_process = None
