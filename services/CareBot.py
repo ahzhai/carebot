@@ -1,3 +1,5 @@
+
+
 # Required Libraries
 # To install the libraries, run the following commands:
 # pip install openai
@@ -144,11 +146,7 @@ def determine_severity(problem_description):
     page = json_data['Page'].lower()
     return 't' in page
 
-def run_carebot(input_file, output_file):
-    audio_response = transcribe_audio_file(input_file)
-    if not audio_response:
-        return
-
+def run_carebot(audio_response, output_file):
     # Step 2: Create a prompt and send it to GPT
     prompt = (f"Based on this text:'{audio_response}' - Can you provide me with a json blob response "
               "where 'Content' maps to a brief factual description of the stimulus causing the emotion? "
@@ -197,7 +195,10 @@ def run_carebot(input_file, output_file):
 # Main Workflow
 def main(input_file, output_file):
     os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
-    run_carebot(input_file, output_file)
+    audio_response = transcribe_audio_file(input_file)
+    if not audio_response:
+        return
+    run_carebot(audio_response, output_file)
         
 
 # Run the main function
