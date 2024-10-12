@@ -69,7 +69,7 @@ orb.addEventListener('click', () => {
                 fetch('/static/temp.mp3')
                     .then(response => {
                         if (response.ok) {
-                            const audio = new Audio('/static/temp.mp3');
+                            const audio = new Audio('/static/output.mp3');
                             orb.classList.remove('thinking');
                             orb.classList.add('speaking');
                             statusText.textContent = ''; 
