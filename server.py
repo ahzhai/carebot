@@ -1,9 +1,10 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 # from flask_cors import CORS
 import services.test_math as test_math
 import services.voice as voice
 import services.CareBot as CareBot  
 import os
+import requests
 
 app = Flask(__name__)
 #CORS(app, resources={r"/calculate": {"origins": "http://localhost:5000"}})
@@ -32,7 +33,17 @@ def start_recording():
 @app.route('/stop_recording')
 def stop_recording():
     try:
-        audio_response = voice.stop_recording_and_process()
+        audio_response = voice.stop_recording_and_transcribe()
+        return jsonify({"message": "Recording stopped and transcribed.", "result": audio_response})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/process_recording', methods=['POST'])
+def process_recording():
+    try:
+        audio_response = request.json.get('transcription')
+        if not audio_response:
+            return jsonify({"error": "No audio response provided"}), 400
 
         # After result has been processed (a transcribed message), we want to call the CareBot.py file
         prompt = (f"Based on this text:'{audio_response}' - Can you provide me with a json blob response "
@@ -41,7 +52,6 @@ def stop_recording():
               "stress: physical pain, full bladder, temperature, sound, light, and internal personal frustration. "
               "'Emotion' maps to a description of the emotions the person is experiencing as a result of the stimulus.")
         
-        # print(f"Prompt to GPT: {prompt}")
         content = CareBot.chat_with_gpt(prompt)
         if not content:
             return jsonify({"message": "" + content})
@@ -50,7 +60,6 @@ def stop_recording():
         json_data = CareBot.extract_json(content)
         problem_description = json_data['Content']
         emotion_description = json_data['Emotion']
-        # print(f"Problem: {problem_description}, Emotion: {emotion_description}")
 
         # Step 4: Create a message for the caregiver
         caregiver_prompt = (f"Here is a description of a dementia patient's problem: {problem_description}. "
@@ -75,9 +84,7 @@ def stop_recording():
             print(f"Voice Message: {voice_message}")
             CareBot.generate_voice_message(voice_message, "temp.mp3")
 
-    
-
-        return jsonify({"message": "Recording stopped and processed. Generated voice message.", "result": {voice_message}})
+        return jsonify({"message": "Recording processed. Generated voice message.", "result": voice_message})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

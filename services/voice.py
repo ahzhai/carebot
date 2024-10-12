@@ -19,7 +19,7 @@ def start_recording():
     
     return "Recording started"
 
-def stop_recording_and_process():
+def stop_recording_and_transcribe():
     global temp_audio_file, recording_process
     
     try:
@@ -41,5 +41,5 @@ def stop_recording_and_process():
         
         return "No recording to process"
     except Exception as e:
-        print(f"Error in stop_recording_and_process: {str(e)}")
+        print(f"Error in stop_recording_and_transcribe: {str(e)}")
         return f"Error processing recording: {str(e)}"

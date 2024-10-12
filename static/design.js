@@ -43,19 +43,33 @@ orb.addEventListener('click', () => {
                     alert('Error stopping recording: ' + data.error);
                 } else {
                     console.log('Recording stopped and processed:', data);
-                    alert('Recording processed: ' + data.result);
+                    // Call process_recording function
+                    return fetch('/process_recording', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ transcription: data.result }),
+                    });
                 }
+            })
+            .then(response => response.json())
+            .then(processedData => {
+                console.log('Recording processed:', processedData);
+                alert('Recording processed: ' + processedData.result);
                 isRecording = false;
                 orb.classList.remove('recording');
             })
             .catch(error => {
-                console.error('Error stopping recording:', error);
-                alert('Error stopping recording: ' + error.message);
+                console.error('Error processing recording:', error);
+                alert('Error processing recording: ' + error.message);
                 isRecording = false;
                 orb.classList.remove('recording');
             });
     }
 });
+
+
 
 
 /*
