@@ -1,5 +1,3 @@
-
-
 # Required Libraries
 # To install the libraries, run the following commands:
 # pip install openai
@@ -18,7 +16,6 @@ import argparse
 TRANSCRIPTION_ENDPOINT = 'https://api.openai.com/v1/audio/transcriptions'
 CHAT_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-AUDIO_FILE_PATH = "toohot.m4a"
 AWS_KEY = ""
 AWS_SECRET_KEY = ""
 
@@ -112,25 +109,15 @@ def extract_json(content):
     # print(content[start_idx:end_idx])
     return json.loads(content[start_idx:end_idx])
 
-# Function: Send SMS via AWS SNS
-def send_sms_via_sns(message):
-    sns = boto3.client(
-        "sns",
-        aws_access_key_id=AWS_KEY,
-        aws_secret_access_key=AWS_SECRET_KEY,
-        region_name="us-east-2"
-    )
-    text_response = sns.publish(
-        PhoneNumber="+18043056660",
-        Message=message,
-        MessageAttributes={
-            'AWS.SNS.SMS.SMSType': {
-                'DataType': 'String',
-                'StringValue': 'Transactional'
-            }
-        }
-    )
-    print(f"Message sent! Message ID: {text_response['MessageId']}")
+# Function: Send Message to Dashboard
+def post_message_to_dashboard(message):
+    url = "http://127.0.0.1:5000/add_message"  # Flask server's URL
+    data = {"message": message, "sender": "caregiver"}
+    response = requests.post(url, json=data)
+    if response.status_code == 200:
+        print("Message successfully sent.")
+    else:
+        print(f"Failed to post message. Status code: {response.status_code}")
 
 def generate_voice_message(message, output_file):
     client = OpenAI()
@@ -157,9 +144,7 @@ def determine_severity(problem_description):
     page = json_data['Page'].lower()
     return 't' in page
 
-# Main Workflow
-def main(input_file, output_file):
-    os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+def run_carebot(input_file, output_file):
     audio_response = transcribe_audio_file(input_file)
     if not audio_response:
         return
@@ -194,7 +179,7 @@ def main(input_file, output_file):
         if message:
             message_dict = extract_json(message)
             print(f"Caregiver Message: {message_dict['Text Response']}")
-            # send_sms_via_sns(message_dict['Text Response'])
+            post_message_to_dashboard(message_dict['Text Response'])
 
     # Step 6: Create a message for the patient
     patient_prompt = (f"Here is a description of a dementia patient's problem: {problem_description}. "
@@ -208,6 +193,11 @@ def main(input_file, output_file):
         voice_message = voice_dict['Voice Response']
         print(f"Voice Message: {voice_message}")
         generate_voice_message(voice_message, output_file)
+
+# Main Workflow
+def main(input_file, output_file):
+    os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+    run_carebot(input_file, output_file)
         
 
 # Run the main function
