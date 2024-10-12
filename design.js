@@ -17,3 +17,8 @@ orb.addEventListener('mouseout', () => {
         0 0 80px #ff3366
     `;
 });
+
+orb.addEventListener('click', () => {
+    alert('Orb button clicked!');
+    // Add your desired functionality here
+});

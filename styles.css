@@ -4,7 +4,7 @@ body {
     align-items: center;
     min-height: 100vh;
     margin: 0;
-    background-color: rgb(242, 223, 199); /* Light beige background similar to the image */
+    background-color: rgb(242, 223, 199);
 }
 
 .glowing-orb {
@@ -16,4 +16,15 @@ body {
         0 0 40px rgba(255, 152, 0, 0.5),
         0 0 80px rgba(255, 64, 129, 0.4),
         0 0 120px rgba(255, 64, 129, 0.3);
+    border: none;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glowing-orb:hover {
+    transform: scale(1.05);
+}
+
+.glowing-orb:active {
+    transform: scale(0.95);
 }
