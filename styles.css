@@ -1,0 +1,19 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: rgb(242, 223, 199); /* Light beige background similar to the image */
+}
+
+.glowing-orb {
+    width: 250px;
+    height: 250px;
+    background: radial-gradient(circle, #ff9800 20%, #ff4081 60%, rgba(244, 216, 180, 0) 100%);
+    border-radius: 50%;
+    box-shadow: 
+        0 0 40px rgba(255, 152, 0, 0.5),
+        0 0 80px rgba(255, 64, 129, 0.4),
+        0 0 120px rgba(255, 64, 129, 0.3);
+}
