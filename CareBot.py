@@ -182,17 +182,6 @@ def main(input_file, output_file):
     emotion_description = json_data['Emotion']
     # print(f"Problem: {problem_description}, Emotion: {emotion_description}")
 
-    # Step 4: Create a message for the caregiver
-    caregiver_prompt = (f"Here is a description of a dementia patient's problem: {problem_description}. "
-                        f"The emotion they're experiencing is {emotion_description}. Can you craft a text message "
-                        "to send to the caregiver with an update and put it in a json blob with the key 'Text Response'?")
-    message = chat_with_gpt(caregiver_prompt)
-    if message:
-        message_dict = extract_json(message)
-        print(f"Caregiver Message: {message_dict['Text Response']}")
-        # send_sms_via_sns(message_dict['Text Response'])
-
-    # Step 5: Create a message for the patient
     #Step 4: Determine Problem Severity
     page_bool = determine_severity(problem_description)
     # Step 5: Create a message for the caregiver
