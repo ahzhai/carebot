@@ -1,4 +1,5 @@
 const orb = document.querySelector('.glowing-orb');
+const statusText = document.getElementById('status-text');
 
 orb.addEventListener('mouseover', () => {
     orb.style.boxShadow = `
@@ -29,6 +30,7 @@ orb.addEventListener('click', () => {
                 console.log('Recording started:', data);
                 isRecording = true;
                 orb.classList.add('recording');
+                statusText.textContent = 'listening...';
             })
             .catch(error => {
                 console.error('Error starting recording:', error);
@@ -45,6 +47,7 @@ orb.addEventListener('click', () => {
                     orb.classList.remove('recording');
                     console.log('Recording stopped and processed:', data);
                     orb.classList.add('thinking');
+                    statusText.textContent = 'reflecting...';
                     // Call process_recording function
                     return fetch('/process_recording', {
                         method: 'POST',
@@ -59,7 +62,6 @@ orb.addEventListener('click', () => {
             .then(processedData => {
                 console.log('Recording processed:', processedData);
                 isRecording = false;
-                // orb.classList.add('normal');
 
                 // Play the audio file
                 console.log('Creating audio player');
@@ -70,6 +72,7 @@ orb.addEventListener('click', () => {
                             const audio = new Audio('/static/temp.mp3');
                             orb.classList.remove('thinking');
                             orb.classList.add('speaking');
+                            statusText.textContent = ''; 
 
                             audio.addEventListener('play', () => {
                                 orb.style.animationDuration = `${audio.duration * 0.001}s`;
@@ -98,6 +101,7 @@ orb.addEventListener('click', () => {
                 alert('Error processing recording: ' + error.message);
                 isRecording = false;
                 orb.classList.remove('recording');
+                statusText.textContent = ''; // Clear the text if there's an error
             });
     }
 });

@@ -77,7 +77,7 @@ def process_recording():
                         "that will be transcribed to audio to say to the patient? Our main goal is to validate their "
                         "feelings and then deescalate any negative emotions/reinforce any positive emotions. Make sure "
                         "to not make it infantilizing - try to be specific. Put your response in a json blob with key 'Voice Response'.")
-        message = CareBot.chat_with_gpt(patient_prompt)
+        message = CareBot.chat_with_gpt(patient_prompt, patient=True)
         if message:
             voice_dict = CareBot.extract_json(message)
             voice_message = voice_dict['Voice Response']

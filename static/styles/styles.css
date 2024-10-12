@@ -59,3 +59,14 @@ body {
         opacity: 0.8;
     }
 }
+
+.status-text {
+    position: absolute;
+    top: calc(50% + 140px);
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: Arial, sans-serif;
+    font-size: 18px;
+    color: #333;
+    text-align: center;
+}
