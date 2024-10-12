@@ -113,7 +113,7 @@ def extract_json(content):
 
 # Function: Send Message to Dashboard
 def post_message_to_dashboard(message):
-    url = "http://127.0.0.1:5000/add_message"  # Flask server's URL
+    url = "http://127.0.0.1:5001/add_message"  # Flask server's URL
     data = {"message": message, "sender": "caregiver"}
     response = requests.post(url, json=data)
     if response.status_code == 200:
