@@ -70,3 +70,13 @@ body {
     color: #333;
     text-align: center;
 }
+
+.carebot-text {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    font-family: Arial, sans-serif;
+    font-size: 24px;
+    color: #333;
+    opacity: 0.7;
+}

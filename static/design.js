@@ -20,6 +20,7 @@ orb.addEventListener('mouseout', () => {
 });
 
 let isRecording = false;
+let animationInterval;
 
 orb.addEventListener('click', () => {
     if (!isRecording) {
@@ -30,7 +31,7 @@ orb.addEventListener('click', () => {
                 console.log('Recording started:', data);
                 isRecording = true;
                 orb.classList.add('recording');
-                statusText.textContent = 'listening...';
+                startAnimatedEllipsis('listening');
             })
             .catch(error => {
                 console.error('Error starting recording:', error);
@@ -47,7 +48,7 @@ orb.addEventListener('click', () => {
                     orb.classList.remove('recording');
                     console.log('Recording stopped and processed:', data);
                     orb.classList.add('thinking');
-                    statusText.textContent = 'reflecting...';
+                    startAnimatedEllipsis('reflecting');
                     // Call process_recording function
                     return fetch('/process_recording', {
                         method: 'POST',
@@ -62,6 +63,7 @@ orb.addEventListener('click', () => {
             .then(processedData => {
                 console.log('Recording processed:', processedData);
                 isRecording = false;
+                stopAnimatedEllipsis();
 
                 // Play the audio file
                 console.log('Creating audio player');
@@ -101,13 +103,24 @@ orb.addEventListener('click', () => {
                 alert('Error processing recording: ' + error.message);
                 isRecording = false;
                 orb.classList.remove('recording');
-                statusText.textContent = ''; // Clear the text if there's an error
+                stopAnimatedEllipsis();
             });
     }
 });
 
+function startAnimatedEllipsis(text) {
+    let dots = 0;
+    stopAnimatedEllipsis(); // Clear any existing interval
+    animationInterval = setInterval(() => {
+        dots = (dots + 1) % 4;
+        statusText.textContent = text + '.'.repeat(dots);
+    }, 500);
+}
 
-
+function stopAnimatedEllipsis() {
+    clearInterval(animationInterval);
+    statusText.textContent = '';
+}
 
 /*
 orb.addEventListener('click', () => {
