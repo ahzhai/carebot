@@ -16,6 +16,14 @@ AUDIO_FILE_PATH = "Schizo.m4a"
 AWS_KEY = ""
 AWS_SECRET_KEY = ""
 
+@app.route('/static/<filename>')
+def serve_static_file(filename):
+    response = send_from_directory('static', filename)
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
 @app.route('/')
 def index():
   return render_template('index.html')
@@ -51,6 +59,20 @@ def process_recording():
         CareBot.run_carebot(audio_response, output_file_path)
         
         return jsonify({"message": "Recording processed. Generated voice message.", "result": output_file_path})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/delete_output', methods=['POST'])
+def delete_output():
+    try:
+        server_directory = os.path.dirname(os.path.abspath(__file__))
+        output_file_path = os.path.join(server_directory, 'static', 'output.mp3')
+
+        if os.path.exists(output_file_path):
+            os.remove(output_file_path)
+            return jsonify({"message": "Old output file deleted."}), 200
+        else:
+            return jsonify({"error": "Output file not found."}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

@@ -43,68 +43,76 @@ orb.addEventListener('click', () => {
                 if (data.error) {
                     console.error('Error stopping recording:', data.error);
                     alert('Error stopping recording: ' + data.error);
-                } else {
-                    orb.classList.remove('recording');
-                    console.log('Recording stopped and processed:', data);
-                    orb.classList.add('thinking');
-                    statusText.textContent = 'reflecting...';
-                    // Call process_recording function
-                    return fetch('/process_recording', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ transcription: data.result }),
-                    });
-                }
+                } 
+
+                const transcription = data.result;
+
+                orb.classList.remove('recording');
+                console.log('Recording stopped and processed:', data);
+                orb.classList.add('thinking');
+                statusText.textContent = 'reflecting...';
+                // Call process_recording function
+                return fetch('/delete_output', {method:'POST'})
+                    .then(() => transcription); 
+            })
+            .then((transcription) => {
+                return fetch('/process_recording', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ transcription: transcription }),
+                });
             })
             .then(response => response.json())
             .then(processedData => {
                 console.log('Recording processed:', processedData);
                 isRecording = false;
 
-                // Play the audio file
-                console.log('Creating audio player');
-                // Update the audio file path
-                fetch('/static/temp.mp3')
-                    .then(response => {
-                        if (response.ok) {
-                            const audio = new Audio('/static/output.mp3');
-                            orb.classList.remove('thinking');
-                            orb.classList.add('speaking');
-                            statusText.textContent = ''; 
-
-                            audio.addEventListener('play', () => {
-                                orb.style.animationDuration = `${audio.duration * 0.001}s`;
-                            });
-
-                            audio.addEventListener('ended', () => {
-                                orb.classList.remove('speaking');
-                            });
-
-                            audio.play().catch(error => {
-                                console.error('Error playing audio:', error);
-                                alert('Error playing audio: ' + error.message);
-                                orb.classList.remove('speaking');
-                            });
-                        } else {
-                            throw new Error('Audio file not found');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error loading audio file:', error);
-                        alert('Error loading audio file: ' + error.message);
-                    });
+                // Poll for new audio file
+                const pollingInterval = setInterval(() => {
+                    const timestamp = new Date().getTime(); // Create a unique timestamp
+                    fetch(`/static/output.mp3?${timestamp}`, { method: 'HEAD' }) // Append the timestamp to the URL
+                        .then(response => {
+                            if (response.ok) {
+                                clearInterval(pollingInterval); // Stop polling when file is available
+                
+                                // Play the new audio
+                                const audio = new Audio(`/static/output.mp3?${timestamp}`); // Append timestamp here too
+                                orb.classList.remove('thinking');
+                                orb.classList.add('speaking');
+                                statusText.textContent = '';
+                
+                                audio.addEventListener('play', () => {
+                                    orb.style.animationDuration = `${audio.duration * 0.001}s`;
+                                });
+                
+                                audio.addEventListener('ended', () => {
+                                    orb.classList.remove('speaking');
+                                });
+                
+                                audio.play().catch(error => {
+                                    console.error('Error playing audio:', error);
+                                    alert('Error playing audio: ' + error.message);
+                                    orb.classList.remove('speaking');
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error polling for new audio file:', error);
+                        });
+                }, 1000); // Poll every 1 second                
             })
             .catch(error => {
-                console.error('Error processing recording:', error);
-                alert('Error processing recording: ' + error.message);
+                console.error('Error during processing:', error);
+                alert('An error occurred: ' + error.message);
                 isRecording = false;
-                orb.classList.remove('recording');
-                statusText.textContent = ''; // Clear the text if there's an error
+                orb.classList.remove('recording', 'thinking', 'speaking');
+                statusText.textContent = '';
             });
     }
-});
+    }
+);
 
 
 

@@ -185,7 +185,9 @@ def run_carebot(audio_response, output_file):
                       "that will be transcribed to audio to say to the patient? Our main goal is to validate their "
                       "feelings and then deescalate any negative emotions/reinforce any positive emotions. Make sure "
                       "to not make it infantilizing - try to be specific. Put your response in a json blob with key 'Voice Response'.")
+    print("PROMPTING")
     message = chat_with_gpt(patient_prompt, patient=True)
+    print("VOICE")
     if message:
         voice_dict = extract_json(message)
         voice_message = voice_dict['Voice Response']
